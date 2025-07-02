@@ -1,143 +1,72 @@
-
-import './style.css'
+import './style.css';
 
 const apiUrl = "https://rickandmortyapi.com/api/character";
+
+
 const main = document.getElementById("app");
 const search = document.getElementById("search");
 const button = document.getElementById("btnSearch");
 const filter = document.getElementById("filtrado");
 const ordenar = document.getElementById("ordenar");
 const btnFav = document.getElementById("ver-favoritos");
+const btnPrev = document.getElementById("prev");
+const btnNext = document.getElementById("next");
+const paginaActual = document.getElementById("pagina-actual");
+const paginacion = document.getElementById("paginacion");
 
-let personajesBase = []; // personajes obtenidos (búsqueda o todos)
-let personajesFiltrados = []; // personajes después del filtrados
 
-let favoritos = JSON.parse(localStorage.getItem("favoritos")) || [];//guarda el personaje favorito
+let personajesBase = [];
+let personajesFiltrados = [];
+let currentPage = 1;
+let totalPages = 1;
+let favoritos = JSON.parse(localStorage.getItem("favoritos")) || [];
 let mostrandoFavoritos = false;
 
-export function createCardErr(msj) {//crea una card/mensaje de error
-  main.innerHTML = ` 
-    <div>
-      <p>${msj}</p>
-    </div>
-  `;
+
+function guardarFavoritos() {
+  localStorage.setItem("favoritos", JSON.stringify(favoritos));
 }
 
-function createCardUser(user) {//crea la card del personaje 
-  const cardUser = document.createElement("div");
-  cardUser.className = "cardUser";
-  const esFavorito = favoritos.some(fav => fav.id === user.id); // revisa si ya está
+function toggleFavorito(user) {
+  const index = favoritos.findIndex(f => f.id === user.id);
+  if (index === -1) favoritos.push(user);
+  else favoritos.splice(index, 1);
+  guardarFavoritos();
+}
 
-  cardUser.innerHTML = `
+function createCardErr(msj) {
+  const div = document.createElement("div");
+  const p = document.createElement("p");
+  p.textContent = msj;
+  div.appendChild(p);
+  return div;
+}
+
+function createCardUser(user) {
+  const card = document.createElement("div");
+  card.className = "cardUser";
+
+  const esFavorito = favoritos.some(f => f.id === user.id);
+
+  card.innerHTML = `
     <h3>${user.name}</h3>
     <img src="${user.image}" alt="${user.name}">
     <p>${user.status}</p>
     <button class="btn-fav">${esFavorito ? "★" : "☆"}</button>
   `;
 
-cardUser.querySelector(".btn-fav").addEventListener("click", (e) => {
-  e.stopPropagation();
-  toggleFavorito(user);
+  card.querySelector(".btn-fav").addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleFavorito(user);
+    actualizarVista();
+  });
 
-  if (mostrandoFavoritos) {
-    // si estamos viendo favoritos, actualizar la vista de favoritos
-    main.innerHTML = '';
-    if (favoritos.length === 0) {
-      createCardErr("Aún no tienes personajes favoritos.");
-    } else {
-      favoritos.forEach(user => createCardUser(user));
-    }
-  } else {
-    aplicarFiltroYOrden(); // en modo normal, aplicar filtros
-  }
-});
+  card.addEventListener("click", () => mostrarDetalle(user));
 
-  cardUser.addEventListener("click", () => mostrarDetalle(user));
-  main.appendChild(cardUser);
+  return card;
 }
 
-
-async function mostrarTodos() {//muestra todos los personajes 
-  main.innerHTML = '';
-  try {
-    const res = await fetch(apiUrl);
-    const data = await res.json();
-    personajesBase = data.results;
-    aplicarFiltroYOrden();
-  } catch (e) {
-    createCardErr("Error al cargar los personajes");
-    console.error(e);
-  }
-}
-
-mostrarTodos();//llamado a la funcion
-
-button.addEventListener("click", async (e) => {
-  e.preventDefault();//evento de para ejecutar la busqueda de personajes 
-  main.innerHTML = '';
-  try {
-    const res = await fetch(apiUrl);
-    const data = await res.json();
-    const valorInput = search.value.trim().toLowerCase();
-
-    if (valorInput !== "") {
-      personajesBase = data.results.filter(user =>
-        user.name.toLowerCase().includes(valorInput)
-      );
-    } else {
-      personajesBase = data.results;
-    }
-
-    if (personajesBase.length === 0) {
-      createCardErr("No se encontraron personajes con ese nombre");
-    } else {
-      aplicarFiltroYOrden();//si busco personajes llamo a esta funcion para poder filtrarlos tambien 
-    }
-
-  } catch (error) {
-    createCardErr("Error al cargar los datos");
-    console.error(error);
-  }
-});
-
-search.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    button.click();
-  }//con el boton enter tmb puedo ejecutar la busqueda
-});
-
-filter.addEventListener("change", aplicarFiltroYOrden);
-ordenar.addEventListener("change", aplicarFiltroYOrden);
-
-function aplicarFiltroYOrden() {
-  // 1. Filtro por estado
-  const estado = filter.value;
-  if (estado === "") {
-    personajesFiltrados = [...personajesBase];
-  } else {
-    personajesFiltrados = personajesBase.filter(user =>
-      user.status.toLowerCase() === estado.toLowerCase()
-    );
-  }
-
-  // 2. Ordenamiento
-  const orden = ordenar.value;
-  if (orden === "A-Z") {
-    personajesFiltrados.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (orden === "Z-A") {
-    personajesFiltrados.sort((a, b) => b.name.localeCompare(a.name));
-  }
-
-  // 3. Mostrar
-  main.innerHTML = '';
-  if (personajesFiltrados.length === 0) {
-    createCardErr("No se encontraron personajes con esos criterios");
-  } else {
-    personajesFiltrados.forEach(user => createCardUser(user));
-  }
-}
-
-function mostrarDetalle(user) {//captura el evento click sobr euna card y mustra otra card con mas detalles 
+function mostrarDetalle(user) {
   const detalle = document.getElementById("detalle-container");
   detalle.classList.remove("oculto");
   detalle.innerHTML = `
@@ -154,34 +83,159 @@ function mostrarDetalle(user) {//captura el evento click sobr euna card y mustra
     detalle.classList.add("oculto");
     detalle.innerHTML = "";
   });
-//scroll para ver el detalle de la card 
+
   detalle.scrollIntoView({ behavior: "smooth" });
 }
 
 
-function toggleFavorito(user) {//agregar o eliminar el personaje de favorito
-  const index = favoritos.findIndex(fav => fav.id === user.id);
-  if (index === -1) {
-    favoritos.push(user);
-  } else {
-    favoritos.splice(index, 1);
-  }
-  localStorage.setItem("favoritos", JSON.stringify(favoritos));
+async function fetchPersonajes(pagina = 1) {
+  const res = await fetch(`${apiUrl}?page=${pagina}`);
+  return await res.json();
 }
 
-btnFav.addEventListener("click", () => {//muestra los favoritos y cambia el texto del btn 
-  main.innerHTML = '';
-  mostrandoFavoritos = !mostrandoFavoritos;
+async function buscarPorNombre(nombre) {
+  let resultados = [];
+  let pagina = 1;
+  let seguir = true;
 
-  if (mostrandoFavoritos) {
-    btnFav.textContent = "Volver";
-    if (favoritos.length === 0) {
-      createCardErr("Aún no tienes personajes favoritos.");
-    } else {
-      favoritos.forEach(user => createCardUser(user));
-    }
+  while (seguir) {
+    const res = await fetch(`${apiUrl}?page=${pagina}`);
+    const data = await res.json();
+    const coincidencias = data.results.filter(user =>
+      user.name.toLowerCase().includes(nombre)
+    );
+    resultados = resultados.concat(coincidencias);
+    if (!data.info.next) seguir = false;
+    else pagina++;
+  }
+
+  return resultados;
+}
+
+
+function renderPersonajes(lista) {
+  main.innerHTML = '';
+  if (lista.length === 0) {
+    main.appendChild(createCardErr("No se encontraron personajes"));
+    return;
+  }
+  lista.forEach(user => {
+    main.appendChild(createCardUser(user));
+  });
+}
+
+function aplicarFiltroYOrden() {
+  const estado = filter.value;
+  if (estado === "") {
+    personajesFiltrados = [...personajesBase];
   } else {
-    btnFav.textContent = "Ver Favoritos";
-    personajesBase.forEach(personaje => createCardUser(personaje));
+    personajesFiltrados = personajesBase.filter(u =>
+      u.status.toLowerCase() === estado.toLowerCase()
+    );
+  }
+
+  const orden = ordenar.value;
+  if (orden === "A-Z") {
+    personajesFiltrados.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (orden === "Z-A") {
+    personajesFiltrados.sort((a, b) => b.name.localeCompare(a.name));
+  }
+
+  renderPersonajes(personajesFiltrados);
+}
+
+function actualizarPaginacion() {
+  paginaActual.textContent = `Página ${currentPage} de ${totalPages}`;
+  btnPrev.disabled = currentPage === 1;
+  btnNext.disabled = currentPage === totalPages;
+  paginacion.style.display = "flex";
+  paginacion.style.justifyContent = "center";
+}
+
+function actualizarVista() {
+  if (mostrandoFavoritos) {
+    main.innerHTML = '';
+    const favs = favoritos;
+    if (favs.length === 0) {
+      main.appendChild(createCardErr("Aún no tienes personajes favoritos."));
+    } else {
+      renderPersonajes(favs);
+    }
+    paginacion.style.display = "none";
+  } else {
+    mostrarTodos(currentPage);
+  }
+}
+
+
+async function mostrarTodos(pagina = 1) {
+  try {
+    const data = await fetchPersonajes(pagina);
+    personajesBase = data.results;
+    currentPage = pagina;
+    totalPages = data.info.pages;
+    aplicarFiltroYOrden();
+    actualizarPaginacion();
+  } catch (error) {
+    main.innerHTML = '';
+    main.appendChild(createCardErr("Error al cargar los personajes"));
+    paginacion.style.display = "none";
+  }
+}
+
+
+button.addEventListener("click", async (e) => {
+  e.preventDefault();
+  const valor = search.value.trim().toLowerCase();
+  if (valor === "") {
+     mostrandoFavoritos = false; 
+    btnFav.textContent = "Ver Favoritos"; 
+    filter.value = "";
+    ordenar.value = "";
+    await mostrarTodos(1); 
+    return;
+  }
+
+  try {
+    const resultado = await buscarPorNombre(valor);
+    personajesBase = resultado;
+    personajesFiltrados = resultado;
+    renderPersonajes(personajesFiltrados);
+    totalPages = 1;
+    currentPage = 1;
+    actualizarPaginacion();
+    paginacion.style.display = "none";
+  } catch (e) {
+    main.innerHTML = '';
+    main.appendChild(createCardErr("Error al buscar personajes"));
   }
 });
+
+search.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") button.click();
+});
+
+filter.addEventListener("change", () => {
+  if (!mostrandoFavoritos) aplicarFiltroYOrden();
+});
+
+ordenar.addEventListener("change", () => {
+  if (!mostrandoFavoritos) aplicarFiltroYOrden();
+});
+
+btnPrev.addEventListener("click", () => {
+  if (currentPage > 1) mostrarTodos(currentPage - 1);
+});
+
+btnNext.addEventListener("click", () => {
+  if (currentPage < totalPages) mostrarTodos(currentPage + 1);
+});
+
+btnFav.addEventListener("click", () => {
+  mostrandoFavoritos = !mostrandoFavoritos;
+  btnFav.textContent = mostrandoFavoritos ? "Volver" : "Ver Favoritos";
+  actualizarVista();
+});
+
+// muestra todos desde el inicio
+mostrarTodos();

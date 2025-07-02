@@ -1,4 +1,4 @@
-/* Reset básico */
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -15,7 +15,7 @@ body {
   flex-direction: column;
 }
 
-/* Header */
+
 header {
   text-align: center;
   margin-bottom: 30px;
@@ -27,7 +27,6 @@ header h1 {
   text-shadow: 1px 1px 5px rgba(0, 255, 159, 0.4);
 }
 
-/* Contenedor de búsqueda */
 #contenedor {
   display: flex;
   justify-content: space-between;
@@ -63,7 +62,7 @@ header h1 {
   max-width: 100%;
 }
 
-/* Input de búsqueda */
+
 #search {
   border: 2px solid #00ff9f;
   width: 100%;
@@ -72,7 +71,7 @@ header h1 {
   color: white;
 }
 
-/* Botones y selects */
+
 #btnSearch,
 #filtrado,
 #ordenar {
@@ -89,7 +88,7 @@ header h1 {
   background-color: #00cc80;
 }
 
-/* Botón volver */
+
 .btn-volver {
   padding: 10px 16px;
   background-color: #444;
@@ -106,7 +105,7 @@ header h1 {
   background-color: #333;
 }
 
-/* Contenedor de tarjetas */
+
 #app {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -116,7 +115,7 @@ header h1 {
   padding: 0 10px;
 }
 
-/* Tarjeta de personaje */
+
 .cardUser {
   background-color: #262626;
   border: 2px solid #00ff9f;
@@ -162,14 +161,14 @@ header h1 {
   color: #ccc;
 }
 
-/* Mensaje de error */
+
 #app div p {
   text-align: center;
   font-size: 18px;
   color: #ff7070;
 }
 
-/* Footer */
+
 footer {
   margin-top: 40px;
   text-align: center;
@@ -178,7 +177,7 @@ footer {
   padding: 10px;
 }
 
-/* Detalle */
+
 .detalle {
   background-color: #111;
   border: 2px solid #00ff9f;
@@ -211,7 +210,6 @@ footer {
   display: none;
 }
 
-/* Media Queries */
 @media (max-width: 768px) {
   #search-container {
     flex-direction: column;
@@ -278,3 +276,41 @@ footer {
   position: relative;
 }
 
+
+#paginacion {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 30px;
+  padding: 10px;
+}
+
+#paginacion button {
+  padding: 10px 20px;
+  background-color: #00ff9f;
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  min-width: 100px;
+}
+
+#paginacion button:hover:not(:disabled) {
+  background-color: #00cc80;
+}
+
+#paginacion button:disabled {
+  background-color: #444;
+  color: #888;
+  cursor: not-allowed;
+}
+
+#pagina-actual {
+  font-weight: bold;
+  font-size: 16px;
+  color: #00ff9f;
+}
